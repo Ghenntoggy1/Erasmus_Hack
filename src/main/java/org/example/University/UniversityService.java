@@ -18,7 +18,14 @@ public class UniversityService {
     public List<UniversityDTO> getUniversities() {
         return universityRepository.findAll().stream()
                 .map(this::mapUniversityToDTO)
-                .collect(Collectors.toList());    }
+                .collect(Collectors.toList());
+    }
+
+    public UniversityDTO getUniversityById(Integer id) {
+        return universityRepository.findById(id)
+                .map(this::mapUniversityToDTO)
+                .orElse(null);
+    }
 
     private UniversityDTO mapUniversityToDTO(University university) {
         return UniversityDTO.builder()
