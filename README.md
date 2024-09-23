@@ -24,3 +24,11 @@ mvn clean install
 Or search for the Maven button in IntelliJ and click `clean`. This will clean previous runs of the project and update dependencies.
 
 For credentials, we use `application.properties` located in `src/main/resources`. Here all the necessary credentials you need are located.
+
+## Docs (SWAGGER)
+
+To enter the Swagger, do the launching steps above, and the enter this link:
+
+```bash
+http://localhost:8080/swagger-ui/index.html
+```
