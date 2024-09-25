@@ -9,12 +9,14 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/auth")
 @Validated
+@CrossOrigin
 public class AuthController {
 
     private static final Logger log = LoggerFactory.getLogger(AuthController.class);
@@ -36,9 +38,8 @@ public class AuthController {
         AuthUser userDetails = (AuthUser) authentication.getPrincipal();
 
 
-        log.info("Token requested for user :{}", authentication.getAuthorities());
+        log.info("Token requested for user :" + userDetails);
         String token = authService.generateToken(authentication);
-
         AuthDTO.Response response = new AuthDTO.Response("User logged in successfully", token);
 
         return ResponseEntity.ok(response);

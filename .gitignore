@@ -28,3 +28,4 @@ replay_pid*
 src/main/resources/public-key.pem
 src/main/resources/private-key.pem
 src/main/resources/.env
+.env

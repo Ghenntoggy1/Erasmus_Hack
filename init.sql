@@ -138,6 +138,25 @@ CREATE TABLE public.offer_specialization (
 	CONSTRAINT fkdqlapa30lqgb8d1n7jjpmaajq FOREIGN KEY (specialization_id) REFERENCES public.specialization(specialization_id)
 );
 
+-- public.users definition
+
+-- Drop table
+
+-- DROP TABLE public.users;
+
+CREATE TABLE public.users (
+    user_id serial4 NOT NULL,
+    name varchar(255) NULL,
+    surname varchar(255) NULL,
+    username varchar(255) NULL UNIQUE,
+    email varchar(255) NULL UNIQUE,
+    password varchar(255) NULL,
+    role varchar(255) NULL,
+    phone varchar(255) NULL,
+    enabled bool NULL,
+    CONSTRAINT users_pkey PRIMARY KEY (user_id)
+);
+
 -- Inserts for public.category
 INSERT INTO public.category (category_name) VALUES
 ('Engineering'),
@@ -300,3 +319,8 @@ INSERT INTO public.offer_specialization (offer_id, specialization_id) VALUES
 (4, 9),
 (5, 10);
 
+-- Inserts for public.Users TODO: check why is not working
+-- INSERT INTO public.users (name, surname, username, email, password, role, phone, enabled) VALUES
+--     ('John', 'Doe', 'johndoe', 'johndoe@gmail.com', '$2a$10$5LaD9/XdfIdZuMKecDeEJOgusLW7URnM5xnhcj.4MJvpW7E1Ho3ZW', '0', '123456789', false);
+-- INSERT INTO public.users (username, email, password, role, phone, enabled) VALUES
+--     ('admins1', 'admins@gmail.com', '$2a$10$SlcHfeY3NDvu5B5crCY7Quyy/0SIB6hfcqMV5T8PiNTLU4mUzX50K', '1', '123456789', false)
