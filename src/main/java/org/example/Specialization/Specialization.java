@@ -3,6 +3,8 @@ package org.example.Specialization;
 import com.fasterxml.jackson.annotation.JsonIdentityInfo;
 import com.fasterxml.jackson.annotation.ObjectIdGenerators;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -11,7 +13,6 @@ import org.example.Category.Category;
 import org.example.Course.Course;
 import org.example.Offer.Offer;
 import org.example.University.University;
-//import org.example.Offer.Offer;
 
 import java.util.List;
 
@@ -21,21 +22,25 @@ import java.util.List;
 @AllArgsConstructor
 @Entity
 @JsonIdentityInfo(generator = ObjectIdGenerators.PropertyGenerator.class, property = "specialization_id")
-
 @Table(name = "Specialization")
 public class Specialization {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "specialization_id")
     private Integer specialization_id;
 
+    @NotNull(message = "Specialization name cannot be null")
+    @Size(min = 2, max = 100, message = "Specialization name must be between 2 and 100 characters")
     @Column(name = "specialization_name")
     private String specialization_name;
 
+    @NotNull(message = "University cannot be null")
     @ManyToOne
     @JoinColumn(name = "university_id", referencedColumnName = "university_id")
     private University universityId;
 
+    @NotNull(message = "Category cannot be null")
     @ManyToOne
     @JoinColumn(name = "category_id", referencedColumnName = "category_id")
     private Category category_id;

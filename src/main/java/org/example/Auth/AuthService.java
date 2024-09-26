@@ -1,5 +1,7 @@
 package org.example.Auth;
 
+import org.example.Security.MFA.MFAService;
+import org.example.Security.MFA.TemporaryUserStore;
 import org.example.User.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,24 +26,39 @@ public class AuthService {
     @Autowired
     private JwtEncoder jwtEncoder;
     @Autowired
+    private MFAService mfaService;
+    @Autowired
     private PasswordEncoder passwordEncoder;
     @Autowired
     private UserRepository userRepository;
 
-    public void registerUser(String username, String password) {
-        // Check if user already exists
-        if (userRepository.findByUsername(username).isPresent()) {
+    @Autowired
+    private TemporaryUserStore temporaryUserStore;
+
+    public String registerUser(AuthDTO.RegisterRequest registerRequest) {
+        // Check if user already exists (only check in permanent storage)
+        if (userRepository.findByUsername(registerRequest.username()).isPresent()) {
             throw new IllegalArgumentException("Username is already taken.");
         }
+        String hashedPassword = passwordEncoder.encode(registerRequest.password());
+        User newUser = new User();
+        newUser.setFirstName(registerRequest.firstName());
+        newUser.setLastName(registerRequest.lastName());
+        newUser.setUsername(registerRequest.username());
+        newUser.setEmail(registerRequest.email());
+        newUser.setPassword(hashedPassword);
+        newUser.setPhone(registerRequest.phone());
+        String qrCode = null;
+        if (registerRequest.mfaEnabled()) {
+            String secret = mfaService.createSecret();
+            newUser.setMfaEnabled(true);
+            newUser.setMfaSecret(secret);
+            qrCode = mfaService.generateQRCode(secret, registerRequest.username());
+            temporaryUserStore.addUser(registerRequest.username(), newUser);
+        }
 
-        // Hash password
-        String hashedPassword = passwordEncoder.encode(password);
-
-        // Create new user
-        //User newUser = new User(username, hashedPassword);
-       // userRepository.save(newUser);
+        return qrCode; // Return the QR code string
     }
-
 
     public String generateToken(Authentication authentication) {
         Instant now = Instant.now();

@@ -4,7 +4,20 @@ public class AuthDTO {
     public record LoginRequest(String username, String password) {
     }
 
-    public record Response(String message, String token) {
+    public record ResponseNoMFA(String message, String token) {
     }
-    public record RegisterRequest(String username, String password) {}
+    public record ResponseMFA(String message, String token, String qrCode) {
+    }
+    public record RegisterRequest(
+            String firstName,
+            String lastName,
+            String username,
+            String email,
+            String password,
+            String phone,
+            boolean enabled,
+            boolean mfaEnabled
+    ) {}
+    public record MfaRequest(String username, String code){};
+
 }
