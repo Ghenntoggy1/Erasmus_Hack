@@ -4,10 +4,12 @@ services:
   postgres:
     image: postgres:latest
     container_name: erasmus_postgres
+    env_file:
+      - .env
     environment:
-      POSTGRES_DB: ERASMUSP
-      POSTGRES_USER: erasmusadmin
-      POSTGRES_PASSWORD: abc123!#
+      POSTGRES_DB: ${DATASOURCE_NAME}
+      POSTGRES_USER: ${DATASOURCE_USERNAME}
+      POSTGRES_PASSWORD: ${DATASOURCE_PASSWORD}
     ports:
       - "5432:5432"
     volumes:
