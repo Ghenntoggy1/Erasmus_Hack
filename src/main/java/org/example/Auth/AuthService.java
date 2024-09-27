@@ -40,7 +40,7 @@ public class AuthService {
     @Autowired
     private TemporaryUserStore temporaryUserStore;
 
-    public String registerUser(AuthDTO.RegisterRequest registerRequest) {
+    public String registerUser(AuthDTO.RegisterRequest registerRequest) throws Exception {
         // Check if user already exists (only check in permanent storage)
         if (userRepository.findByUsername(registerRequest.username()).isPresent()) {
             throw new IllegalArgumentException("Username is already taken.");

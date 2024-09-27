@@ -10,7 +10,10 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.example.Security.RsaKeyConfigProperties;
+import org.example.Security.RsaUtil;
 import org.example.User.Role.Role;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -74,10 +77,32 @@ public class User implements UserDetails {
     @Column(name = "mfa_enabled")
     private boolean mfaEnabled;
 
+    @Autowired
+    @Transient
+    private RsaKeyConfigProperties rsaKeyConfig;
+
     @Column(name = "mfa_secret")
     private String mfaSecret;
 
-    @Override
+    // Set the encrypted MFA secret
+    public void setMfaSecret(String mfaSecret) {
+        try {
+            this.mfaSecret = RsaUtil.encrypt(mfaSecret, rsaKeyConfig.publicKey());
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to encrypt MFA secret", e);
+        }
+    }
+
+    // Retrieve the decrypted MFA secret
+    public String getMfaSecret() {
+        try {
+            return RsaUtil.decrypt(this.mfaSecret, rsaKeyConfig.privateKey());
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to decrypt MFA secret", e);
+        }
+    }
+
+        @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         // If you have multiple roles or authorities, you can adjust this.
         // For a single role, it could be as simple as:

@@ -13,17 +13,20 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.Base64;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 
 @Service
 public class MFAService {
     private final GoogleAuthenticator googleAuthenticator = new GoogleAuthenticator();
+    private final Map<String, Boolean> scannedUsers = new ConcurrentHashMap<>();
 
     public String createSecret() {
         return googleAuthenticator.createCredentials().getKey();
     }
     public String generateQRCode(String secret, String username) {
-        String qrCodeData = "otpauth://totp/" + username + "?secret=" + secret + "&issuer=YourApp";
+        String qrCodeData = "otpauth://totp/" + username + "?secret=" + secret + "&issuer=ErasmusPP";
         QRCodeWriter qrCodeWriter = new QRCodeWriter();
         BitMatrix bitMatrix;
         try {
@@ -49,6 +52,13 @@ public class MFAService {
     }
     public boolean validateCode(String secret, String code) {
         return googleAuthenticator.authorize(secret, Integer.parseInt(code)); // Pass the current time in milliseconds
+    }
+    public boolean isCodeScanned(String username) {
+        return scannedUsers.getOrDefault(username, false);
+    }
+
+    public void markAsScanned(String username) {
+        scannedUsers.put(username, true); // Mark user as scanned
     }
 
 }

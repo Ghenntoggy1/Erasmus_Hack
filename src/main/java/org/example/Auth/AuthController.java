@@ -1,5 +1,6 @@
 package org.example.Auth;
 
+import jakarta.validation.Valid;
 import org.example.Security.MFA.MFAService;
 import org.example.Security.MFA.TemporaryUserStore;
 import org.example.User.Role.Role;
@@ -40,7 +41,7 @@ public class AuthController {
     private MFAService mfaService;
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody AuthDTO.LoginRequest userLogin) throws IllegalAccessException {
+    public ResponseEntity<?> login(@Valid @RequestBody AuthDTO.LoginRequest userLogin) throws IllegalAccessException {
         Authentication authentication =
                 authenticationManager
                         .authenticate(new UsernamePasswordAuthenticationToken(
@@ -64,7 +65,7 @@ public class AuthController {
 
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
-    public ResponseEntity<?> register(@RequestBody AuthDTO.RegisterRequest registerRequest) {
+    public ResponseEntity<?> register(@Valid @RequestBody AuthDTO.RegisterRequest registerRequest) throws Exception {
         String qrCode = authService.registerUser(registerRequest);
         if (qrCode.startsWith("data")) {
             return ResponseEntity.ok(new AuthDTO.ResponseMFA("MFA QR code generated", null, qrCode));
@@ -75,14 +76,14 @@ public class AuthController {
     }
 
     @PostMapping("/validate-mfa")
-    public ResponseEntity<?> validateMfa(@RequestBody AuthDTO.MfaRequest mfaRequest) {
+    public ResponseEntity<?> validateMfa(@Valid @RequestBody AuthDTO.MfaRequest mfaRequest) throws Exception {
         Authentication authentication;
         User user = temporaryUserStore.getUser(mfaRequest.username());
 
         // Case 1: Handle registration flow
         if (user != null) {
             // This is a new user registering, stored temporarily
-            boolean isValidCode = mfaService.validateCode(user.getMfaSecret(), mfaRequest.code());
+            boolean isValidCode = mfaService.validateCode(user.getMfaSecret(), String.valueOf(mfaRequest.code()));
             if (!isValidCode) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new AuthDTO.ResponseNoMFA("Invalid MFA code", null));
             }
@@ -109,7 +110,7 @@ public class AuthController {
             }
 
             // Validate MFA code
-            boolean isValidCode = mfaService.validateCode(user.getMfaSecret(), mfaRequest.code());
+            boolean isValidCode = mfaService.validateCode(user.getMfaSecret(), String.valueOf(mfaRequest.code()));
             if (!isValidCode) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new AuthDTO.ResponseNoMFA("Invalid MFA code", null));
             }
@@ -127,7 +128,6 @@ public class AuthController {
         String token = authService.generateToken(authentication);
         return ResponseEntity.ok(new AuthDTO.ResponseNoMFA("User successfully authenticated", token));
     }
-
 
 
 }
