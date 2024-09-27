@@ -52,7 +52,6 @@ public class AuthController {
         User user = userRepository.findByUsername(userLogin.username()).orElseThrow(() -> new IllegalArgumentException("User not found"));
 
         if (user.isMfaEnabled()) {
-            // MFA is enabled, request MFA code
             return ResponseEntity.ok(new AuthDTO.ResponseNoMFA("Enter MFA code", null)); // Indicate to enter MFA code
         }
 
@@ -77,43 +76,58 @@ public class AuthController {
 
     @PostMapping("/validate-mfa")
     public ResponseEntity<?> validateMfa(@RequestBody AuthDTO.MfaRequest mfaRequest) {
-        // Retrieve user from a temporary store for registration or a user repository for login
         Authentication authentication;
         User user = temporaryUserStore.getUser(mfaRequest.username());
-        if (user == null) {
-            user = userRepository.findByUsername(mfaRequest.username()).orElse(null);
-            if (user == null) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new AuthDTO.ResponseNoMFA("User not found", null));
+
+        // Case 1: Handle registration flow
+        if (user != null) {
+            // This is a new user registering, stored temporarily
+            boolean isValidCode = mfaService.validateCode(user.getMfaSecret(), mfaRequest.code());
+            if (!isValidCode) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new AuthDTO.ResponseNoMFA("Invalid MFA code", null));
             }
-            else{
-                boolean isValidCode = mfaService.validateCode(user.getMfaSecret(), mfaRequest.code());
-                if (!isValidCode) {
-                    return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new AuthDTO.ResponseNoMFA("Invalid MFA code", null));
-                }
-                 authentication =  SecurityContextHolder.getContext().getAuthentication();
-            }
-        }
-        else{
+
+            // Assign role and save the user to the repository
             user.setRole(Role.user);
             userRepository.save(user);
             temporaryUserStore.removeUser(mfaRequest.username());
 
-            // Programmatically authenticate the user
-             authentication = new UsernamePasswordAuthenticationToken(
+            // Set authentication manually
+            authentication = new UsernamePasswordAuthenticationToken(
                     user.getUsername(),
-                    null, // You can use null for credentials as they are not needed anymore
-                    user.getAuthorities() // Grant user their roles/authorities
+                    null,
+                    user.getAuthorities()
             );
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+        }
+        // Case 2: Handle login flow
+        else {
+            // Retrieve user from repository for login flow
+            user = userRepository.findByUsername(mfaRequest.username()).orElse(null);
+            if (user == null) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new AuthDTO.ResponseNoMFA("User not found", null));
+            }
 
-            // Set the authentication in the security context
+            // Validate MFA code
+            boolean isValidCode = mfaService.validateCode(user.getMfaSecret(), mfaRequest.code());
+            if (!isValidCode) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new AuthDTO.ResponseNoMFA("Invalid MFA code", null));
+            }
+
+            // Re-authenticate the user manually after MFA validation
+            authentication = new UsernamePasswordAuthenticationToken(
+                    user.getUsername(),
+                    null,
+                    user.getAuthorities() // Set user's roles/authorities
+            );
             SecurityContextHolder.getContext().setAuthentication(authentication);
         }
 
+        // Generate token and return success response
         String token = authService.generateToken(authentication);
-
-        // Return success response with token
         return ResponseEntity.ok(new AuthDTO.ResponseNoMFA("User successfully authenticated", token));
     }
+
 
 
 }

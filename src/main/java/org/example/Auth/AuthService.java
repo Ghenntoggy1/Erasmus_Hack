@@ -72,15 +72,12 @@ public class AuthService {
                     null, // You can use null for credentials as they are not needed anymore
                     newUser.getAuthorities() // Grant user their roles/authorities
             );
-
-            // Set the authentication in the security context
             SecurityContextHolder.getContext().setAuthentication(authentication);
 
             // Return success response with token
             return generateToken(authentication);
         }
-
-        return qrCode; // Return the QR code string
+        return qrCode;
     }
 
     public String generateToken(Authentication authentication) {

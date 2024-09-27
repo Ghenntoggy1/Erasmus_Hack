@@ -19,10 +19,4 @@ public class UserController {
         List<User> users = userService.findAllUsers();
         return ResponseEntity.ok(users);
     }
-
-    @PostMapping("/user/hasMFA")
-    public ResponseEntity<Boolean> hasMFA(@RequestBody String username) {
-        boolean hasMFA = userService.findByUsername(username).isMfaEnabled();
-        return ResponseEntity.ok(hasMFA);
-    }
 }
