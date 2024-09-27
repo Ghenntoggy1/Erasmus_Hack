@@ -67,7 +67,12 @@ public class AuthController {
     @ResponseStatus(HttpStatus.CREATED)
     public ResponseEntity<?> register(@RequestBody AuthDTO.RegisterRequest registerRequest) {
         String qrCode = authService.registerUser(registerRequest);
-        return ResponseEntity.ok(new AuthDTO.ResponseMFA("MFA QR code generated", null, qrCode));
+        if (qrCode.startsWith("data")) {
+            return ResponseEntity.ok(new AuthDTO.ResponseMFA("MFA QR code generated", null, qrCode));
+        }
+        else {
+            return ResponseEntity.ok(new AuthDTO.ResponseNoMFA("User registered successfully", qrCode));
+        }
     }
 
     @PostMapping("/validate-mfa")

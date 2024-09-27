@@ -2,13 +2,18 @@ package org.example.Auth;
 
 import org.example.Security.MFA.MFAService;
 import org.example.Security.MFA.TemporaryUserStore;
+import org.example.User.Role.Role;
 import org.example.User.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.example.User.UserRepository;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
@@ -55,6 +60,24 @@ public class AuthService {
             newUser.setMfaSecret(secret);
             qrCode = mfaService.generateQRCode(secret, registerRequest.username());
             temporaryUserStore.addUser(registerRequest.username(), newUser);
+        }
+        else {
+            Authentication authentication;
+            newUser.setMfaEnabled(false);
+            newUser.setRole(Role.user);
+            userRepository.save(newUser);
+            // Programmatically authenticate the user
+            authentication = new UsernamePasswordAuthenticationToken(
+                    newUser.getUsername(),
+                    null, // You can use null for credentials as they are not needed anymore
+                    newUser.getAuthorities() // Grant user their roles/authorities
+            );
+
+            // Set the authentication in the security context
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+
+            // Return success response with token
+            return generateToken(authentication);
         }
 
         return qrCode; // Return the QR code string
