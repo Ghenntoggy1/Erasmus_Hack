@@ -11,7 +11,6 @@ public class EncryptionUtilsTest {
 
     @BeforeEach
     public void setUp() {
-        // Manually set the encryption key for testing purposes
         encryptionUtils.base64EncryptionKey = "mF3p9G7F0zQ8uYc5WZ5f8Jv+3G1VYgNmWqv9a0z1x2E=";
         encryptionUtils.init();
     }
