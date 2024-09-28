@@ -47,12 +47,16 @@ public class SecurityConfig {
     @Autowired
     private JpaUserDetailsService userDetailsService;
 
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+
 
     @Bean
     public AuthenticationManager authManager() {
 
         var authProvider = new DaoAuthenticationProvider();
         authProvider.setUserDetailsService(userDetailsService);
+        authProvider.setPasswordEncoder(passwordEncoder);
         return new ProviderManager(authProvider);
     }
 

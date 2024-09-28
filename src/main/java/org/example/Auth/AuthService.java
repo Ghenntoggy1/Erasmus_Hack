@@ -14,6 +14,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.example.User.UserRepository;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
@@ -33,6 +34,8 @@ public class AuthService {
     private MFAService mfaService;
     @Autowired
     private UserRepository userRepository;
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     @Autowired
     private TemporaryUserStore temporaryUserStore;
@@ -46,7 +49,7 @@ public class AuthService {
         newUser.setLastName(registerRequest.lastName());
         newUser.setUsername(registerRequest.username());
         newUser.setEmail(registerRequest.email());
-        newUser.setPassword(registerRequest.password());
+        newUser.setPassword(passwordEncoder.encode(registerRequest.password()));
         newUser.setPhone(registerRequest.phone());
         String qrCode = null;
         if (registerRequest.mfaEnabled()) {
