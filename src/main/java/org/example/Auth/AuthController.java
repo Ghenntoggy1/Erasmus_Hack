@@ -1,6 +1,7 @@
 package org.example.Auth;
 
 import jakarta.validation.Valid;
+import jdk.jshell.Snippet;
 import org.example.Security.MFA.MFAService;
 import org.example.Security.MFA.TemporaryUserStore;
 import org.example.User.Role.Role;
@@ -84,12 +85,13 @@ public class AuthController {
         if (user != null) {
             // This is a new user registering, stored temporarily
             boolean isValidCode = mfaService.validateCode(user.getMfaSecret(), String.valueOf(mfaRequest.code()));
+
             if (!isValidCode) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new AuthDTO.ResponseNoMFA("Invalid MFA code", null));
             }
 
             // Assign role and save the user to the repository
-            user.setRole(Role.user);
+            user.setRole(Role.USER);
             userRepository.save(user);
             temporaryUserStore.removeUser(mfaRequest.username());
 

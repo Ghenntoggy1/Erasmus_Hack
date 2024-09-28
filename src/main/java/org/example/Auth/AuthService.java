@@ -14,7 +14,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.example.User.UserRepository;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.JwtClaimsSet;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
@@ -33,25 +32,21 @@ public class AuthService {
     @Autowired
     private MFAService mfaService;
     @Autowired
-    private PasswordEncoder passwordEncoder;
-    @Autowired
     private UserRepository userRepository;
 
     @Autowired
     private TemporaryUserStore temporaryUserStore;
 
-    public String registerUser(AuthDTO.RegisterRequest registerRequest) throws Exception {
-        // Check if user already exists (only check in permanent storage)
+    public String registerUser(AuthDTO.RegisterRequest registerRequest) {
         if (userRepository.findByUsername(registerRequest.username()).isPresent()) {
             throw new IllegalArgumentException("Username is already taken.");
         }
-        String hashedPassword = passwordEncoder.encode(registerRequest.password());
         User newUser = new User();
         newUser.setFirstName(registerRequest.firstName());
         newUser.setLastName(registerRequest.lastName());
         newUser.setUsername(registerRequest.username());
         newUser.setEmail(registerRequest.email());
-        newUser.setPassword(hashedPassword);
+        newUser.setPassword(registerRequest.password());
         newUser.setPhone(registerRequest.phone());
         String qrCode = null;
         if (registerRequest.mfaEnabled()) {
@@ -64,7 +59,7 @@ public class AuthService {
         else {
             Authentication authentication;
             newUser.setMfaEnabled(false);
-            newUser.setRole(Role.user);
+            newUser.setRole(Role.USER);
             userRepository.save(newUser);
             // Programmatically authenticate the user
             authentication = new UsernamePasswordAuthenticationToken(
@@ -82,18 +77,16 @@ public class AuthService {
 
     public String generateToken(Authentication authentication) {
         Instant now = Instant.now();
-
-        String scope = authentication.getAuthorities()
-                .stream()
-                .map(GrantedAuthority::getAuthority)
-                .collect(Collectors.joining(" "));
-
+        User userDetails = userRepository.findByUsername(authentication.getName()).get();
         JwtClaimsSet claims = JwtClaimsSet.builder()
                 .issuer("self")
                 .issuedAt(now)
                 .expiresAt(now.plus(10, ChronoUnit.HOURS))
-                .subject(authentication.getName())
-                .claim("scope", scope)
+                .claim("username", authentication.getName()) // Add username
+                .claim("user_id", userDetails.getId()) // Add user_id (ensure you have a method to get userId)
+                .claim("role", authentication.getAuthorities().stream()
+                        .map(GrantedAuthority::getAuthority)
+                        .collect(Collectors.joining(","))) // Collect roles into a single string (if needed)
                 .build();
 
         return jwtEncoder.encode(JwtEncoderParameters.from(claims)).getTokenValue();
