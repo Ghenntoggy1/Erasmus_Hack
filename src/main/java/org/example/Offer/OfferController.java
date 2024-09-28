@@ -50,7 +50,7 @@ public class OfferController {
         return offerService.getFilteredOffers(university, speciality, semester, searchTerm, country, city, duration, category, language, scholarshipMin, scholarshipMax);
     }
     @GetMapping("/{id}")
-    public ResponseEntity<OfferResponse> getOfferById(@PathVariable Integer id) {
+    public ResponseEntity<OfferResponse> getOfferById(@PathVariable("id") Integer id) {
         OfferResponse offer = offerService.getOfferById(id);
         if (offer != null) {
             return ResponseEntity.ok(offer);
