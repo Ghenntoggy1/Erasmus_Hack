@@ -64,6 +64,11 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
+    @GetMapping()
+    public String hello(){
+        return "hello";
+    }
+
     @PostMapping("/register")
     @ResponseStatus(HttpStatus.CREATED)
     public ResponseEntity<?> register(@Valid @RequestBody AuthDTO.RegisterRequest registerRequest) throws Exception {

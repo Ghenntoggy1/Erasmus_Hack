@@ -56,6 +56,7 @@ public class AuthService {
             String secret = mfaService.createSecret();
             newUser.setMfaEnabled(true);
             newUser.setMfaSecret(secret);
+            newUser.setRole(Role.USER);
             qrCode = mfaService.generateQRCode(secret, registerRequest.username());
             temporaryUserStore.addUser(registerRequest.username(), newUser);
         }
