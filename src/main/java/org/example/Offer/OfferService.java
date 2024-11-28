@@ -102,7 +102,7 @@ public class OfferService {
                 predicates.add(criteriaBuilder.equal(root.get("university").get("city").get("city_id"), city));
             }
             if (category != null) {
-                predicates.add(criteriaBuilder.equal(root.get("category").get("category_id"), category));
+                predicates.add(criteriaBuilder.equal(root.get("specializations").get("category_id").get("category_id"), category));
             }
             if (language != null && !language.isEmpty()) {
                 predicates.add(criteriaBuilder.equal(root.get("language"), language));

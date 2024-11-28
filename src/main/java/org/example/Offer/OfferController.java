@@ -1,5 +1,6 @@
 package org.example.Offer;
 
+import jakarta.validation.Valid;
 import org.example.Mail.EmailService;
 import org.example.Mail.EmailServiceImpl;
 import org.example.Mail.SubscriptionRequest;
@@ -24,7 +25,7 @@ public class OfferController {
     }
 
     @PostMapping()
-    public ResponseEntity<String> createOffer(@RequestBody OfferDTO offerDTO) {
+    public ResponseEntity<String> createOffer(@Valid @RequestBody OfferDTO offerDTO) {
         Offer createdOffer = offerService.createOffer(offerDTO);
         return ResponseEntity.ok("ok");
 
@@ -49,7 +50,7 @@ public class OfferController {
         return offerService.getFilteredOffers(university, speciality, semester, searchTerm, country, city, duration, category, language, scholarshipMin, scholarshipMax);
     }
     @GetMapping("/{id}")
-    public ResponseEntity<OfferResponse> getOfferById(@PathVariable Integer id) {
+    public ResponseEntity<OfferResponse> getOfferById(@PathVariable("id") Integer id) {
         OfferResponse offer = offerService.getOfferById(id);
         if (offer != null) {
             return ResponseEntity.ok(offer);
@@ -59,7 +60,7 @@ public class OfferController {
     }
 
     @PostMapping("/subscribe")
-    public ResponseEntity<String> subscribeToOffer(@RequestBody SubscriptionRequest request) {
+    public ResponseEntity<String> subscribeToOffer(@Valid @RequestBody SubscriptionRequest request) {
         String response = emailService.sendMail(request);
         return ResponseEntity.ok(response);}
 }

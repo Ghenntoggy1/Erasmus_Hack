@@ -24,3 +24,10 @@ hs_err_pid*
 replay_pid*
 /.idea/
 /target/
+
+src/main/resources/public-key.pem
+src/main/resources/private-key.pem
+src/main/resources/.env
+src/main/resources/your_keystore.jks
+Erasmus.iml
+.env
