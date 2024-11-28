@@ -19,7 +19,6 @@ public class UserController {
     @GetMapping("/userdata")
     public ResponseEntity<User> getUserData() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
         if (authentication != null && authentication.isAuthenticated()) {
             String username = authentication.getName();
             User user = userService.getUserByUsername(username);

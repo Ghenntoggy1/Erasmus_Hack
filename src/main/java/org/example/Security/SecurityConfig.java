@@ -6,6 +6,7 @@ import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
 import org.example.Auth.JpaUserDetailsService;
+import org.example.User.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,7 +48,8 @@ public class SecurityConfig {
     private RsaKeyConfigProperties rsaKeyConfigProperties;
     @Autowired
     private JpaUserDetailsService userDetailsService;
-
+    @Autowired
+    private UserService userService;
 
 
     @Bean
@@ -69,10 +71,11 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> {
                     auth.requestMatchers("/error/**").permitAll();
                     auth.requestMatchers("/api/auth/**").permitAll();
+                    auth.requestMatchers("/api/users/userdata").permitAll();
                     auth.anyRequest().authenticated();
                 })
                 .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .addFilterBefore(new JwtCookieFilter(jwtDecoder(), userDetailsService), UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(new JwtCookieFilter(jwtDecoder(), userService), UsernamePasswordAuthenticationFilter.class)
                 .oauth2ResourceServer((oauth2) -> oauth2.jwt((jwt) -> jwt.decoder(jwtDecoder())))
                 .userDetailsService(userDetailsService)
                 .httpBasic(Customizer.withDefaults())

@@ -5,6 +5,8 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.example.User.User;
+import org.example.User.UserService;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -17,11 +19,11 @@ import java.io.IOException;
 public class JwtCookieFilter extends OncePerRequestFilter {
 
     private final JwtDecoder jwtDecoder;
-    private final UserDetailsService userDetailsService;
+    private final UserService userService;
 
-    public JwtCookieFilter(JwtDecoder jwtDecoder, UserDetailsService userDetailsService) {
+    public JwtCookieFilter(JwtDecoder jwtDecoder, UserService userService) {
         this.jwtDecoder = jwtDecoder;
-        this.userDetailsService = userDetailsService;
+        this.userService = userService;
     }
 
     @Override
@@ -42,8 +44,8 @@ public class JwtCookieFilter extends OncePerRequestFilter {
         if (jwt != null) {
             try {
                 // Validate JWT and set authentication
-                String username = jwtDecoder.decode(jwt).getSubject();
-                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+                String username = jwtDecoder.decode(jwt).getClaimAsString("username");
+                User userDetails = userService.loadUserByUsername(username);
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
                 SecurityContextHolder.getContext().setAuthentication(authentication);

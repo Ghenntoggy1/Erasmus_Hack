@@ -28,4 +28,6 @@ replay_pid*
 src/main/resources/public-key.pem
 src/main/resources/private-key.pem
 src/main/resources/.env
+src/main/resources/your_keystore.jks
+Erasmus.iml
 .env

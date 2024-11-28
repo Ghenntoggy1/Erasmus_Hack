@@ -65,10 +65,10 @@ public class AuthController {
         String token = authService.generateToken(authentication);
         ResponseCookie jwtCookie = ResponseCookie.from("jwt", token)
                 .httpOnly(true) // Marks the cookie as HTTP-only
-                .secure(false)   // Use in production; set to false for local testing without HTTPS
+                .secure(true)   // Use in production; set to false for local testing without HTTPS
                 .path("/")      // Cookie available to the entire application
                 .maxAge(7 * 24 * 60 * 60) // Expires in 7 days
-                .sameSite("Strict") // Prevent CSRF attacks
+                .sameSite("None") // Prevent CSRF attacks
                 .build();
 
         return ResponseEntity.ok()
@@ -89,7 +89,23 @@ public class AuthController {
             return ResponseEntity.ok(new AuthDTO.ResponseMFA("MFA QR code generated", null, qrCode));
         }
         else {
-            return ResponseEntity.ok(new AuthDTO.ResponseNoMFA("User registered successfully", qrCode));
+            Authentication authentication =
+                    authenticationManager
+                            .authenticate(new UsernamePasswordAuthenticationToken(
+                                    registerRequest.username(),
+                                    registerRequest.password()));
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            String token = authService.generateToken(authentication);
+            ResponseCookie jwtCookie = ResponseCookie.from("jwt", token)
+                    .httpOnly(true) // Marks the cookie as HTTP-only
+                    .secure(true)   // Use in production; set to false for local testing without HTTPS
+                    .path("/")      // Cookie available to the entire application
+                    .maxAge(7 * 24 * 60 * 60) // Expires in 7 days
+                    .sameSite("None") // Prevent CSRF attacks
+                    .build();
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.SET_COOKIE, jwtCookie.toString())
+                    .body(new AuthDTO.ResponseNoMFA("User registered successfully", token));
         }
     }
 
@@ -138,9 +154,33 @@ public class AuthController {
         }
 
         // Generate token and return success response
+        log.info("Token requested for user :{}", authentication.getAuthorities());
         String token = authService.generateToken(authentication);
-        return ResponseEntity.ok(new AuthDTO.ResponseNoMFA("User successfully authenticated", token));
+        ResponseCookie jwtCookie = ResponseCookie.from("jwt", token)
+                .httpOnly(true) // Marks the cookie as HTTP-only
+                .secure(true)   // Use in production; set to false for local testing without HTTPS
+                .path("/")      // Cookie available to the entire application
+                .maxAge(7 * 24 * 60 * 60) // Expires in 7 days
+                .sameSite("None") // Prevent CSRF attacks
+                .build();
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, jwtCookie.toString())
+                .body(new AuthDTO.ResponseNoMFA("User logged in successfully", token));
     }
 
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout() {
+        // Create a cookie with the same name as the JWT cookie and set it to expire immediately
+        ResponseCookie jwtCookie = ResponseCookie.from("jwt", "")
+                .httpOnly(true)  // Keep the HTTP-only attribute
+                .secure(true)    // Use in production; set to false for local testing without HTTPS
+                .path("/")       // Ensure the cookie path matches the original cookie
+                .maxAge(0)       // Expire the cookie immediately
+                .sameSite("None") // Match the original cookie's SameSite attribute
+                .build();
 
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, jwtCookie.toString())
+                .body(new AuthDTO.ResponseNoMFA("User logged out successfully", null));
+    }
 }

@@ -1,13 +1,16 @@
 package org.example.User;
 
 import org.example.User.Role.Role;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Set;
 
 @Service
-public class UserService {
+public class UserService implements UserDetailsService {
 
     private final UserRepository userRepository;
 
@@ -15,8 +18,8 @@ public class UserService {
         this.userRepository = userRepository;
     }
 
-
-    public User findByUsername(String username) {
+    @Override
+    public User loadUserByUsername(String username) {
         return userRepository.findByUsername(username).get();
     }
 
