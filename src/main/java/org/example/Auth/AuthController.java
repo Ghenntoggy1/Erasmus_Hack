@@ -65,7 +65,7 @@ public class AuthController {
         String token = authService.generateToken(authentication);
         ResponseCookie jwtCookie = ResponseCookie.from("jwt", token)
                 .httpOnly(true) // Marks the cookie as HTTP-only
-                .secure(true)   // Use in production; set to false for local testing without HTTPS
+                .secure(false)   // Use in production; set to false for local testing without HTTPS
                 .path("/")      // Cookie available to the entire application
                 .maxAge(7 * 24 * 60 * 60) // Expires in 7 days
                 .sameSite("Strict") // Prevent CSRF attacks
@@ -73,7 +73,7 @@ public class AuthController {
 
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, jwtCookie.toString())
-                .body(new AuthDTO.ResponseNoMFA("User logged in successfully", null));
+                .body(new AuthDTO.ResponseNoMFA("User logged in successfully", token));
     }
 
     @GetMapping()
