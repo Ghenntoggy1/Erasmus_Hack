@@ -10,7 +10,9 @@ import org.example.User.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -18,6 +20,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+
+import static io.jsonwebtoken.Jwts.header;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -59,9 +63,17 @@ public class AuthController {
 
         log.info("Token requested for user :{}", authentication.getAuthorities());
         String token = authService.generateToken(authentication);
+        ResponseCookie jwtCookie = ResponseCookie.from("jwt", token)
+                .httpOnly(true) // Marks the cookie as HTTP-only
+                .secure(true)   // Use in production; set to false for local testing without HTTPS
+                .path("/")      // Cookie available to the entire application
+                .maxAge(7 * 24 * 60 * 60) // Expires in 7 days
+                .sameSite("Strict") // Prevent CSRF attacks
+                .build();
 
-        AuthDTO.ResponseNoMFA response = new AuthDTO.ResponseNoMFA("User logged in successfully", token);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.SET_COOKIE, jwtCookie.toString())
+                .body(new AuthDTO.ResponseNoMFA("User logged in successfully", null));
     }
 
     @GetMapping()
@@ -88,19 +100,16 @@ public class AuthController {
 
         // Case 1: Handle registration flow
         if (user != null) {
-            // This is a new user registering, stored temporarily
             boolean isValidCode = mfaService.validateCode(user.getMfaSecret(), String.valueOf(mfaRequest.code()));
 
             if (!isValidCode) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new AuthDTO.ResponseNoMFA("Invalid MFA code", null));
             }
 
-            // Assign role and save the user to the repository
             user.setRole(Role.USER);
             userRepository.save(user);
             temporaryUserStore.removeUser(mfaRequest.username());
 
-            // Set authentication manually
             authentication = new UsernamePasswordAuthenticationToken(
                     user.getUsername(),
                     null,
@@ -110,13 +119,10 @@ public class AuthController {
         }
         // Case 2: Handle login flow
         else {
-            // Retrieve user from repository for login flow
             user = userRepository.findByUsername(mfaRequest.username()).orElse(null);
             if (user == null) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new AuthDTO.ResponseNoMFA("User not found", null));
             }
-
-            // Validate MFA code
             boolean isValidCode = mfaService.validateCode(user.getMfaSecret(), String.valueOf(mfaRequest.code()));
             if (!isValidCode) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new AuthDTO.ResponseNoMFA("Invalid MFA code", null));
